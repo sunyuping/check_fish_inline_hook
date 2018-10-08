@@ -120,6 +120,8 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
                     else
                         //result + 0x38 , vm address
                         v7 = v5 - *(_QWORD *)(v9 + 0x18 );
+
+                        v7 = (__int64)header - *(_QWORD *)(v9 + 0x18 );
                     // v7 = (header - vm address)
                 }
                 
@@ -153,14 +155,33 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
 
 pthread_mutex_t unk_1032AA700;
 
+
+void _prepare_fish_hook_check(){
+    
+    _QWORD *v7; // x0
+    
+    v7 = (_QWORD *)malloc(40);
+    memset(v7, 0xff, 40);
+    
+    v7[3] = 0LL;
+    v7[4] = 0LL;
+    v7[1] = 0LL;
+    v7[2] = 0LL;
+    v7[0] = 0;
+    //*(_QWORD *)(i + 32) = v7;
+    
+    qword_103211130 = (__int64)v7;
+}
+
 __int64 prepare_fish_hook_check()
 {
-    void *v0; // x19
+    _prepare_fish_hook_check();
+    
     __int64 result; // x0
     unsigned __int64 v2; // x20
     __int64 v3; // x8
     __int64 *v4; // x22
-    unsigned __int64 v5; // x23
+
     __int64 i; // x24
     __int64 v7; // x0
     _QWORD *v8; // x0
@@ -170,13 +191,15 @@ __int64 prepare_fish_hook_check()
     __int64 v12; // [xsp+10h] [xbp-70h]
     integer_t task_info_out[TASK_DYLD_INFO_COUNT]; // [xsp+18h] [xbp-68h]
     mach_msg_type_number_t task_info_outCnt; // [xsp+2Ch] [xbp-54h]
+    
     Dl_info v15; // [xsp+30h] [xbp-50h]
+    pthread_mutex_lock((pthread_mutex_t *)&unk_1032AA700);
+    dladdr(prepare_fish_hook_check, &v15);
+    void *my_dli_fbase; // x19
+    my_dli_fbase = v15.dli_fbase;
     
-
     
-    //    pthread_mutex_lock((pthread_mutex_t *)&unk_1032AA700);
-    //    dladdr(prepare_fish_hook_check, &v15);
-    //    v0 = v15.dli_fbase;
+    
     task_info_outCnt = TASK_DYLD_INFO_COUNT;
     //0x11u
     result = task_info( mach_task_self_ , TASK_DYLD_INFO , task_info_out, &task_info_outCnt);
@@ -187,15 +210,23 @@ __int64 prepare_fish_hook_check()
         const struct dyld_image_info* info = infos->infoArray;
         uint32_t infoArrayCount = infos->infoArrayCount;
         
-        
         v2 = *(_QWORD *)(*(_QWORD *)task_info_out + 88LL); //infos->uuidArrayCount
+
+        
+        const struct dyld_uuid_info* pUuid_Array = infos->uuidArray; //v4
+        struct dyld_uuid_info pUuid_info = pUuid_Array[0]; //v4
+        unsigned __int64 index; // x23
+
         v3 = qword_103211130;
+        infos->uuidArrayCount;
+        
         if ( v2 )
         {
-            const struct dyld_uuid_info* pUuid_info  = infos->uuidArray; //v4
-            
+            const struct dyld_uuid_info* uuidArray = infos->uuidArray;
             v4 = *(__int64 **)(*(_QWORD *)task_info_out + 96LL); //infos->uuidArray
-            v5 = 1LL;
+            
+            
+            index = 1;
             
             
             
@@ -211,22 +242,29 @@ __int64 prepare_fish_hook_check()
              
              */
             
+
+            
             
             for ( i = qword_103211130; ;  )
             {
-                const struct mach_header *header =  pUuid_info->imageLoadAddress;
+                const struct mach_header *header =  pUuid_info.imageLoadAddress;
                 v7 = *v4; //mach_header* v7
-                header = (const struct mach_header *)v7;
+//                uuidArray;
                 
-                
-                
-                *(_BYTE *)(i + 24) = *v4 == (_QWORD)v0;
-                *(_BYTE *)(v3 + 25) = (signed __int64)(v5 - 1) > 1;
+//                header = (const struct mach_header *)v7;
+
+                *(_BYTE *)(i + 24) = *v4 == (_QWORD)my_dli_fbase;
+                *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
                 find_load_commands(v7, &v12, &v11);
                 
+//                *(_BYTE *)(i + 24) = ( header == my_dli_fbase );
+//                *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
                 
+//                find_load_commands(header, &v12, &v11);
                 *(_QWORD *)(i + 8) = v12;
                 *(_QWORD *)(i + 16) = v11;
+                
+                
                 v8 = *(_QWORD **)(i + 32);
                 if ( !v8 )
                 {
@@ -243,13 +281,17 @@ __int64 prepare_fish_hook_check()
                 }
                 
                 
-                if ( v5 >= v2 )
+                if ( index >= infos->uuidArrayCount )
                     break;
                 
                 //next index in array
                 v4 += 3;
+
+                pUuid_info = pUuid_Array[index];
+//                pUuid_info = v4;
+//                pUuid_info += 3;
                 v3 = qword_103211130;
-                ++v5;
+                ++index;
                 i = (__int64)v8;
             }
             
@@ -299,44 +341,19 @@ int new_open(const char *path, int oflag, ...) {
 
 
 int main(int argc, char * argv[]) {
-    
-    
+
     // 初始化一个 rebinding 结构体
     struct rebinding open_rebinding = { "open", (void*)new_open, (void **)&orig_open };
     
     // 将结构体包装成数组，并传入数组的大小，对原符号 open 进行重绑定
     rebind_symbols((struct rebinding[1]){open_rebinding}, 1);
-    
-    
-    double *user_time;
-    double *system_time;
-    double *percent;
-    
-    //    sample( getpid() , user_time, system_time, percent);
-    
-    //    return 0;
-    
-    _QWORD *v7; // x0
-    
-    v7 = (_QWORD *)malloc(40);
-    memset(v7, 0xff, 40);
-    
-    v7[3] = 0LL;
-    v7[4] = 0LL;
-    v7[1] = 0LL;
-    v7[2] = 0LL;
-    //    *v7 = 0LL;
-    v7[0] = 0;
-    //*(_QWORD *)(i + 32) = v7;
-    
-    qword_103211130 = (__int64)v7;
-    
-    
+
+
     open("/var/mobile/Media/a.txt", 'r');
+ 
+    
     
     //初始化链表
-    //    dispatch_queue_t myqueue = dispatch_queue_create("asdf", 0);
-    //    dispatch_async( myqueue , ^{
     prepare_fish_hook_check();
     
     
@@ -345,11 +362,9 @@ int main(int argc, char * argv[]) {
     
     hooked = checkFishHook( (unsigned __int64)&dladdr, 0, 0);
     printf("hooked: %d\n",hooked);
-    //    });
+
     
-    
-    
-    
+
     
     while (getchar() == 'q') {
         return 0;
