@@ -73,7 +73,7 @@ typedef int8 BYTE;
 typedef int16 WORD;
 typedef int32 DWORD;
 typedef int32 LONG;
-//typedef int BOOL;       // uppercase BOOL is usually 4 bytes
+typedef int BOOL;       // uppercase BOOL is usually 4 bytes
 #endif
 typedef int64 QWORD;
 #ifndef __cplusplus
