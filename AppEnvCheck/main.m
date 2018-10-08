@@ -388,7 +388,7 @@ int main(int argc, char * argv[]) {
     
     
     
-    
+    NSLog(@"func open address: %p",&open);
     open("/var/mobile/Media/a.txt", 'r');
     
     //初始化链表
