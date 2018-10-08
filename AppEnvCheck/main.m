@@ -189,9 +189,10 @@ __int64 prepare_fish_hook_check()
     
     
     
-    //    pthread_mutex_lock((pthread_mutex_t *)&unk_1032AA700);
-    //    dladdr(prepare_fish_hook_check, &v15);
-    //    v0 = v15.dli_fbase;
+    //dladdr(prepare_fish_hook_check, &v15);
+    //v0 = v15.dli_fbase;
+    
+    
     task_info_outCnt = TASK_DYLD_INFO_COUNT;
     //0x11u
     result = task_info( mach_task_self_ , TASK_DYLD_INFO , task_info_out, &task_info_outCnt);
@@ -226,6 +227,7 @@ __int64 prepare_fish_hook_check()
             {
                 const struct mach_header *header =  pUuid_info->imageLoadAddress;
 
+                
                 *(_BYTE *)(i + 24) = (header == (_QWORD)v0);
                 *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
 
@@ -273,7 +275,6 @@ __int64 prepare_fish_hook_check()
             //            free(v8);
             j = (_QWORD *)v10[4];
         }
-        //        result = pthread_mutex_unlock((pthread_mutex_t *)&unk_1032AA700);
     }
     
     
@@ -320,18 +321,24 @@ int main(int argc, char * argv[]) {
     open("/var/mobile/Media/a.txt", 'r');
     
     //初始化链表
-    //    dispatch_queue_t myqueue = dispatch_queue_create("asdf", 0);
-    //    dispatch_async( myqueue , ^{
     prepare_fish_hook_check();
     
     
-    int hooked = checkFishHook( (unsigned __int64)&open, 0, 0);
+    int hooked;
+    
+    hooked = checkFishHook( (unsigned __int64)&open, 0, 0);
     printf("hooked: %d\n",hooked);
     
     hooked = checkFishHook( (unsigned __int64)&dladdr, 0, 0);
     printf("hooked: %d\n",hooked);
-    //    });
     
+    hooked = checkFishHook( (unsigned __int64)&open, 0, 0);
+    printf("hooked: %d\n",hooked);
+    
+    hooked = checkFishHook( (unsigned __int64)&dladdr, 0, 0);
+    printf("hooked: %d\n",hooked);
+    
+
     
     
     
