@@ -175,7 +175,6 @@ __int64 prepare_fish_hook_check()
     
     void *v0; // x19
     __int64 result; // x0
-    unsigned __int64 v2; // x20
     __int64 v3; // x8
     __int64 *v4; // x22
     __int64 i; // x24
@@ -200,46 +199,14 @@ __int64 prepare_fish_hook_check()
     {
         struct task_dyld_info dyld_info = *(struct task_dyld_info*)(void*)(task_info_out);
         struct  dyld_all_image_infos* infos = (struct dyld_all_image_infos *) dyld_info.all_image_info_addr;
-        const struct dyld_image_info* info = infos->infoArray;
-        
-        
-        uint32_t infoArrayCount = infos->infoArrayCount;
-        int iii = sizeof(struct dyld_uuid_info);
+
         struct dyld_uuid_info* pUuid_info  = infos->uuidArray; //v4
-//        for (int i = 0; i < infoArrayCount; ++i) {
-//        }
-        
-        
-        v2 = *(_QWORD *)(*(_QWORD *)task_info_out + 88LL); //infos->uuidArrayCount
-        
-        unsigned __int64 index; // x23
-        
+
+
         v3 = qword_103211130;
-        if ( v2 )
+        if ( infos->uuidArrayCount )
         {
 
-//            v4 = *(__int64 **)(*(_QWORD *)task_info_out + 96LL); //infos->uuidArray
-            
-            const struct dyld_uuid_info* uuidArray = infos->uuidArray;
-           
-            printf("%p,%p,%p,%p\n",uuidArray,uuidArray+1,&(uuidArray[0]),&(uuidArray[1]));
-            
-            
-            struct{
-                int length;
-                struct dyld_uuid_info info[];
-            } Mime;
-            
-            struct Mime *mine = (struct Mime *)uuidArray;
-            info = uuidArray;
-            
-           
-            
-            
-            index = 1;
-//            printf("%p \n",mine->info[0]);
-//            printf("%p \n",mine->info[1]);
-//            printf("%p \n",mine->info[2]);
 
             /*
              qword_103211130 为链表头
@@ -252,21 +219,16 @@ __int64 prepare_fish_hook_check()
              , file beg , file end, header is zero (byte) , next entry,
              
              */
-            
+
+            unsigned __int64 index = 1;
             
             for ( i = qword_103211130; ;  )
             {
                 const struct mach_header *header =  pUuid_info->imageLoadAddress;
-//                __int64 v7; // x0
-//                v7 = *v4; //mach_header* v7
-//                header = (const struct mach_header *)v7;
-                
-                
+
                 *(_BYTE *)(i + 24) = (header == (_QWORD)v0);
                 *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
 
-
-                
                 
                 find_load_commands(header, &v12, &v11);
                 
@@ -289,12 +251,9 @@ __int64 prepare_fish_hook_check()
                 }
                 
                 
-                if ( index >= v2 )
+                if ( index >= infos->uuidArrayCount )
                     break;
                 
-                //next index in array
-//                int asdf = sizeof(__int64);
-//                v4 += 3;
                 pUuid_info = get_next(pUuid_info);
                 v3 = qword_103211130;
                 ++index;
