@@ -32,8 +32,8 @@ getenv hooked: 1
 
 ## InLine Hook
 
-[substrate]((https://github.com/coolstar/substitute.git))
-[HookZz](https://github.com/jmpews/HookZz)
+[substrate]((https://github.com/coolstar/substitute.git))  
+[HookZz](https://github.com/jmpews/HookZz)  
 
 检测函数前几个汇编指令是否为跳转指令即可。 
 
