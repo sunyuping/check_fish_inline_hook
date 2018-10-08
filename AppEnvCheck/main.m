@@ -103,45 +103,15 @@ BOOL checkFishHook(void *funcAddr)
     return TRUE;
 }
 
-/*
- printf("%p\n", (void*)&(sc->cmd) - (void*)sc);
- printf("%p\n", (void*)&(sc->cmdsize) - (void*)sc);
- printf("%p\n", (void*)&(sc->segname) - (void*)sc);
- printf("%p\n", (void*)&(sc->vmaddr) - (void*)sc);
- printf("%p\n", (void*)&(sc->vmsize) - (void*)sc);
- 
- printf("%p\n", (void*)&(sc->fileoff) - (void*)sc);
- printf("%p\n", (void*)&(sc->filesize) - (void*)sc);
- printf("%p\n", (void*)&(sc->maxprot) - (void*)sc);
- printf("%p\n", (void*)&(sc->initprot) - (void*)sc);
- printf("%p\n", (void*)&(sc->nsects) - (void*)sc);
- printf("%p\n", (void*)&(sc->flags) - (void*)sc);
- */
-
-// struct segment_command_64 {  for 64-bit architectures
-//uint32_t    cmd;        /* LC_SEGMENT_64 */                  +0
-//uint32_t    cmdsize;    /* includes sizeof section_64 structs */ +4
-//char        segname[16];    /* segment name */ +8
-//uint64_t    vmaddr;        /* memory address of this segment */ +18
-//uint64_t    vmsize;        /* memory size of this segment */ + 20
-//uint64_t    fileoff;    /* file offset of this segment */ + 28
-//uint64_t    filesize;    /* amount to map from the file */ +30
-//vm_prot_t    maxprot;    /* maximum VM protection */   +38
-//vm_prot_t    initprot;    /* initial VM protection */  0x3c
-//uint32_t    nsects;        /* number of sections in segment */   0x40
-//uint32_t    flags;        /* flags */           0x44
-//};
 
 
 //mach_header**,v2,a3
 // find Load Commands , where segment name == '__TEXT' from mach_header
-//a2 vmsize
-//a3 权限　vm_prot_t
 void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *myb)
 {
     if( header->ncmds )
     {
-        __int64 vmaddr = 0; // x23
+        __int64 vmaddr = 0;
         int cmdIndex = 0;
 
         void *loadCmd = header + 1 ;
@@ -192,12 +162,18 @@ void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *m
         }
         
         
-        __int64 v10 = sc->fileoff + vmaddr + sc->vmaddr;
-        
-        
+        __int64 v10 = sc->fileoff + (__int64)header;
+
         *mya = v10;
         *myb = v10 + (_QWORD)sc->filesize;
         NSLog(@"sc filesize: %llu", (_QWORD)sc->filesize);
+ 
+        
+        if(sc->filesize > 0)
+        {
+            void *buf = malloc(sc->filesize);
+//            memcpy(buf, mya, myb);
+        }
         
         
         NSLog(@"result: %lld,%lld,%lld,%lld",vmaddr,v10,*mya,*myb);
@@ -210,8 +186,6 @@ void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *m
 
 __int64 find_load_commands_old(__int64 result, __int64 *a2, _QWORD *a3)
 {
-    NSLog(@"find_load_commands_old");
-    
     _QWORD *v3; // x19
     __int64 *v4; // x20
     __int64 v5; // x21
@@ -355,10 +329,9 @@ __int64 prepare_fish_hook_check()
                 __int64 v11;
                 __int64 v12;
                 
-                find_load_commands_old(header, &v12, &v11);
-                i->beg = v12;
-                i->end = v11;
-                
+//                find_load_commands_old(header, &v12, &v11);
+//                i->beg = v12;
+//                i->end = v11;
 
                 
                 find_load_commands(header, &v12, &v11);
