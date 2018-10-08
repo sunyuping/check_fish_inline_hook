@@ -115,7 +115,7 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
     v3 = a3;
     v4 = a2;
     v5 = result;
-//    struct mach_header *header = (struct mach_header *)result;
+    struct mach_header *header = (struct mach_header *)result;
     v6 = *(_DWORD *)(result + 16); // header->ncmds
     if ( v6 )
     {
@@ -164,8 +164,6 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
 
 
 
-
-pthread_mutex_t unk_1032AA700;
 void _prepare_root()
 {
     rootNode = malloc(sizeof(HookNode));
@@ -179,16 +177,11 @@ __int64 prepare_fish_hook_check()
     __int64 result;
 
     struct HookNode *curr;
-    __int64 *v4;
-    
+
     struct HookNode *i;
 
-    
     struct HookNode *next;
 
-    
-
-    
     
     
     integer_t task_info_out[TASK_DYLD_INFO_COUNT];
