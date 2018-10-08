@@ -41,8 +41,13 @@
 @import MachO.loader;
 
 
-
-
+typedef struct {
+    int64 a;   //+0
+    int64 beg; //+8
+    int64 end; //+16
+    int64 isMain; //+24
+    struct HookNode *next; //+32
+} HookNode;
 
 
 QWORD qword_103211130;
@@ -61,19 +66,22 @@ int checkFishHook(unsigned __int64 a1, __int64 a2, __int64 a3)
     
     v5 = qword_103211130;
     if ( !qword_103211130 )
-        return 0xFFFFFFFFLL;
-    v6 = *(_QWORD *)(qword_103211130 + 32);
+        return 0xFFFFFFFF;
+    v6 = *(_QWORD *)(qword_103211130 + 32); //next
+    
     if ( !v6 )
-        return 0LL;
+        return 0;
+    
     while ( a1 >= *(_QWORD *)(v5 + 16) || a1 <= *(_QWORD *)(v5 + 8) || *(_BYTE *)(v5 + 24) )
     {
         v5 = v6;
         v6 = *(_QWORD *)(v6 + 32);
+        
         if ( !v6 )
-            return 0LL;
+            return 0;
     }
     
-    return 1LL;
+    return 1;
 }
 
 
@@ -205,6 +213,8 @@ __int64 prepare_fish_hook_check()
 
 
         v3 = qword_103211130;
+        
+        
         if ( infos->uuidArrayCount )
         {
 
@@ -237,18 +247,18 @@ __int64 prepare_fish_hook_check()
                 
                 *(_QWORD *)(i + 8) = v12;
                 *(_QWORD *)(i + 16) = v11;
+                
+                
                 v8 = *(_QWORD **)(i + 32);
                 if ( !v8 )
                 {
                     v8 = (_QWORD *)malloc(40);
-                    v8[3] = 0LL;
-                    v8[4] = 0LL;
-                    v8[1] = 0LL;
-                    v8[2] = 0LL;
-                    *v8 = 0LL;
-                    //置0
-                    
-                    
+                    v8[3] = 0;
+                    v8[4] = 0;
+                    v8[1] = 0;
+                    v8[2] = 0;
+                    v8[0] = 0;
+
                     *(_QWORD *)(i + 32) = v8;
                 }
                 
@@ -269,6 +279,7 @@ __int64 prepare_fish_hook_check()
         {
             v8 = (_QWORD *)qword_103211130;
         }
+        
         for ( j = *(_QWORD **)(v3 + 32); j; v8 = v10 )
         {
             v10 = j;
