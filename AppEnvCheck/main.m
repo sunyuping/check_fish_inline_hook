@@ -24,9 +24,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-//#include <sys/ptrace.h>
 #include <sys/sysctl.h>
-//#include <sys/vnode.h>
 
 #include <math.h>
 #include <time.h>
@@ -44,27 +42,17 @@
 
 
 typedef struct HookNode {
-    int64 a;   //+0
     void* beg; //+8
     void* end; //+16
     
-    BYTE isMain; //+24
     BYTE index;
-    BYTE arg1;
-    BYTE arg2;
-    
-    BYTE arg3;
-    BYTE arg4;
-    BYTE arg5;
-    BYTE arg6;
-    
+
     struct HookNode *next; //+32
 } HookNode;
 
 
 static struct HookNode *rootNode = NULL;
 
-//QWORD qword_103211130;
 
 
 /*
@@ -72,43 +60,33 @@ static struct HookNode *rootNode = NULL;
  如果在说明是自己实现的伪函数，则位于(_TEXT,__text)之中
  如果是系统的原函数，则位于 (__DATAl,a_symbol_ptr)里的
 */
-BOOL checkFishHook(void *funcAddr)
+BOOL inMachOSegTEXT(void *funcAddr)
 {
-    struct HookNode *curr = rootNode;
-    if ( curr == NULL )
-    {
-        return TRUE;
-    }
-    
-    struct HookNode *next = rootNode->next;
-
-    if ( next == NULL )
-    {
-        return 0;
-    }
-    
-
-    while (funcAddr >= curr->end ||
-           funcAddr <= curr->beg ||
-           curr->isMain
-           ) {
-        curr = next;
-        next = next->next;
+    BOOL inTEXT = FALSE;
+    struct HookNode *node;
+    for ( node = rootNode; node; node = node->next ) {
         
-        if (next == NULL) {
-            return FALSE;
+        if (funcAddr > node->beg && funcAddr < node->end) {
+            inTEXT = TRUE;
+            break;
         }
-    }
 
-    return TRUE;
+    }
+    
+    return inTEXT;
 }
 
-
-
-//mach_header**,v2,a3
-// find Load Commands , where segment name == '__TEXT' from mach_header
-void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *myb)
+BOOL fishHooked(void *funcAddr)
 {
+    return inMachOSegTEXT(funcAddr);
+}
+
+void find_mach0_file_text_seg_range( struct mach_header_64 *header , __int64 *begin, _QWORD *end)
+{
+    NSLog(@"mach_header filetype: %d",header->filetype);
+    //#define    MH_EXECUTE    0x2        /* demand paged executable file */
+
+    
     if( header->ncmds )
     {
         __int64 vmaddr = 0;
@@ -118,16 +96,10 @@ void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *m
         struct segment_command_64 *sc = (struct segment_command_64 *)loadCmd;
 
 
-
-        // find '__TEXT'
         while ( TRUE )
         {
-//          NSLog(@"index: %d",cmdIndex);
-            int result = strcmp(sc->segname, "__TEXT");
             NSLog(@"sc->segname: %s",sc->segname);
-            
 
-            
             
             if ( sc->cmd == LC_SEGMENT_64 )     // value == 0x19 // is segment?
             {
@@ -142,7 +114,6 @@ void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *m
                     else
                     {
                         vmaddr = (__int64)header - sc->vmaddr;
-                        NSLog(@"sc,vmaddr: %p,%llu , %lld",sc,sc->vmaddr, vmaddr);
                     }
                 }
 
@@ -164,20 +135,21 @@ void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *m
         
         __int64 v10 = sc->fileoff + (__int64)header;
 
-        *mya = v10;
-        *myb = v10 + (_QWORD)sc->filesize;
-        NSLog(@"sc filesize: %llu", (_QWORD)sc->filesize);
- 
+        *begin = v10;
+        *end = v10 + (_QWORD)sc->filesize;
+
         
         if(sc->filesize > 0)
         {
-            void *buf = malloc(sc->filesize);
-//            memcpy(buf, mya, myb);
+            NSLog(@"func open address: %p",&open);
+            
+            void *funcAddress = &open;
+            if ( funcAddress > *begin && funcAddress < *end ) {
+                NSLog(@"hooked");
+            }
         }
         
         
-        NSLog(@"result: %lld,%lld,%lld,%lld",vmaddr,v10,*mya,*myb);
-        int asbc = 0;
     }
     
     
@@ -321,7 +293,7 @@ __int64 prepare_fish_hook_check()
                 const struct mach_header_64 *header =  pUuid_info->imageLoadAddress;
 
                 
-                i->isMain = (header == v0);
+//                i->isMain = (header == v0);
 
                 curr->index = (signed __int64)(index - 1) > 1;
 
@@ -329,18 +301,13 @@ __int64 prepare_fish_hook_check()
                 __int64 v11;
                 __int64 v12;
                 
-//                find_load_commands_old(header, &v12, &v11);
-//                i->beg = v12;
-//                i->end = v11;
 
                 
-                find_load_commands(header, &v12, &v11);
+                find_mach0_file_text_seg_range(header, &v12, &v11);
                 i->beg = v12;
                 i->end = v11;
 
-                
 
-                
                 next = i->next;
                 if ( next == NULL )
                 {
@@ -430,16 +397,16 @@ int main(int argc, char * argv[]) {
     
     int hooked;
     
-    hooked = checkFishHook( (unsigned __int64)&open);
+    hooked = fishHooked( (unsigned __int64)&open);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&dladdr);
+    hooked = fishHooked( (unsigned __int64)&dladdr);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&open);
+    hooked = fishHooked( (unsigned __int64)&open);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&dladdr);
+    hooked = fishHooked( (unsigned __int64)&dladdr);
     printf("hooked: %d\n",hooked);
     
 
