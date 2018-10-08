@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1E27BAA62160A98C0052DE31 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1E27BAA52160A98C0052DE31 /* main.m */; };
-		1EADCBA9216B73A900545C86 /* readme.md in Resources */ = {isa = PBXBuildFile; fileRef = 1EADCBA8216B73A900545C86 /* readme.md */; };
 		1EEFD819216AF33400A77230 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = 1EEFD817216AF33300A77230 /* fishhook.c */; };
 /* End PBXBuildFile section */
 
@@ -17,7 +16,6 @@
 		1E27BAA42160A98C0052DE31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1E27BAA52160A98C0052DE31 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1E27BAAC2160AA3F0052DE31 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
-		1EADCBA8216B73A900545C86 /* readme.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
 		1EEFD817216AF33300A77230 /* fishhook.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fishhook.c; sourceTree = "<group>"; };
 		1EEFD818216AF33300A77230 /* fishhook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fishhook.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -52,7 +50,6 @@
 		1E27BA952160A9790052DE31 /* AppEnvCheck */ = {
 			isa = PBXGroup;
 			children = (
-				1EADCBA8216B73A900545C86 /* readme.md */,
 				1E27BAA42160A98C0052DE31 /* Info.plist */,
 				1E27BAAC2160AA3F0052DE31 /* defs.h */,
 				1E27BAA52160A98C0052DE31 /* main.m */,
@@ -119,7 +116,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1EADCBA9216B73A900545C86 /* readme.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
