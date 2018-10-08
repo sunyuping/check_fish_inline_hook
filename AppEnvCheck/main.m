@@ -41,6 +41,8 @@
 @import MachO.loader;
 
 
+
+
 typedef struct HookNode {
     int64 a;   //+0
     void* beg; //+8
@@ -65,7 +67,11 @@ static struct HookNode *rootNode = NULL;
 //QWORD qword_103211130;
 
 
-//检测函数地址是不是位于__Text之中
+/*
+ 检测传入的函数地址是不是位于(_TEXT,__text)之中，
+ 如果在说明是自己实现的伪函数，则位于(_TEXT,__text)之中
+ 如果是系统的原函数，则位于 (__DATAl,a_symbol_ptr)里的
+*/
 BOOL checkFishHook(void *funcAddr)
 {
     struct HookNode *curr = rootNode;
@@ -97,12 +103,115 @@ BOOL checkFishHook(void *funcAddr)
     return TRUE;
 }
 
+/*
+ printf("%p\n", (void*)&(sc->cmd) - (void*)sc);
+ printf("%p\n", (void*)&(sc->cmdsize) - (void*)sc);
+ printf("%p\n", (void*)&(sc->segname) - (void*)sc);
+ printf("%p\n", (void*)&(sc->vmaddr) - (void*)sc);
+ printf("%p\n", (void*)&(sc->vmsize) - (void*)sc);
+ 
+ printf("%p\n", (void*)&(sc->fileoff) - (void*)sc);
+ printf("%p\n", (void*)&(sc->filesize) - (void*)sc);
+ printf("%p\n", (void*)&(sc->maxprot) - (void*)sc);
+ printf("%p\n", (void*)&(sc->initprot) - (void*)sc);
+ printf("%p\n", (void*)&(sc->nsects) - (void*)sc);
+ printf("%p\n", (void*)&(sc->flags) - (void*)sc);
+ */
+
+// struct segment_command_64 {  for 64-bit architectures
+//uint32_t    cmd;        /* LC_SEGMENT_64 */                  +0
+//uint32_t    cmdsize;    /* includes sizeof section_64 structs */ +4
+//char        segname[16];    /* segment name */ +8
+//uint64_t    vmaddr;        /* memory address of this segment */ +18
+//uint64_t    vmsize;        /* memory size of this segment */ + 20
+//uint64_t    fileoff;    /* file offset of this segment */ + 28
+//uint64_t    filesize;    /* amount to map from the file */ +30
+//vm_prot_t    maxprot;    /* maximum VM protection */   +38
+//vm_prot_t    initprot;    /* initial VM protection */  0x3c
+//uint32_t    nsects;        /* number of sections in segment */   0x40
+//uint32_t    flags;        /* flags */           0x44
+//};
+
 
 //mach_header**,v2,a3
 // find Load Commands , where segment name == '__TEXT' from mach_header
-// a2, a3   file begin -> file end?
-__int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
+//a2 vmsize
+//a3 权限　vm_prot_t
+void find_load_commands( struct mach_header_64 *header , __int64 *mya, _QWORD *myb)
 {
+    if( header->ncmds )
+    {
+        __int64 vmaddr = 0; // x23
+        int cmdIndex = 0;
+
+        void *loadCmd = header + 1 ;
+        struct segment_command_64 *sc = (struct segment_command_64 *)loadCmd;
+
+
+
+        // find '__TEXT'
+        while ( TRUE )
+        {
+//          NSLog(@"index: %d",cmdIndex);
+            int result = strcmp(sc->segname, "__TEXT");
+            NSLog(@"sc->segname: %s",sc->segname);
+            
+
+            
+            
+            if ( sc->cmd == LC_SEGMENT_64 )     // value == 0x19 // is segment?
+            {
+                if ( !vmaddr )
+                {
+                    bool a = sc->fileoff;
+                    bool b = !sc->filesize;
+                    bool aa = a || b ;
+                    
+                    if( aa )
+                        vmaddr = 0;
+                    else
+                    {
+                        vmaddr = (__int64)header - sc->vmaddr;
+                        NSLog(@"sc,vmaddr: %p,%llu , %lld",sc,sc->vmaddr, vmaddr);
+                    }
+                }
+
+                
+                if( strcmp(sc->segname, "__TEXT") == 0 )
+                {
+                    break;
+                }
+                
+            }
+
+            
+            sc = (struct segment_command_64*)((BYTE*)sc + sc->cmdsize);
+            
+            if ( ++cmdIndex >= header->ncmds )
+                return ;
+        }
+        
+        
+        __int64 v10 = sc->fileoff + vmaddr + sc->vmaddr;
+        
+        
+        *mya = v10;
+        *myb = v10 + (_QWORD)sc->filesize;
+        NSLog(@"sc filesize: %llu", (_QWORD)sc->filesize);
+        
+        
+        NSLog(@"result: %lld,%lld,%lld,%lld",vmaddr,v10,*mya,*myb);
+        int asbc = 0;
+    }
+    
+    
+}
+
+
+__int64 find_load_commands_old(__int64 result, __int64 *a2, _QWORD *a3)
+{
+    NSLog(@"find_load_commands_old");
+    
     _QWORD *v3; // x19
     __int64 *v4; // x20
     __int64 v5; // x21
@@ -124,17 +233,34 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
         v9 = result + 0x20 ; // ,     _PAGEZERO
         while ( 1 )
         {
+            NSLog(@"segment name: %s" , (const char *)(v9 + 0x08));
+
+            
             if ( *(_DWORD *)v9 == 0x19 )     // value == 0x19
             {
                 if ( !v7 )
                 {
                     //result + 48,  result + 50
                     //command size ,file size
-                    if ( *(_QWORD *)(v9 + 0x28) || !*(_QWORD *)(v9 + 0x30 ) )
+                    
+                    _QWORD a = *(_QWORD *)(v9 + 0x28);
+                    _QWORD b = *(_QWORD *)(v9 + 0x30 );
+                    
+                    bool ba = a;
+                    bool bb = !b;
+                    
+                    bool aa = ba || bb;
+                    if( aa )
+//                    if ( *(_QWORD *)(v9 + 0x28) || !*(_QWORD *)(v9 + 0x30 ) )
                         v7 = 0LL;
                     else
+                    {
                         //result + 0x38 , vm address
-                        v7 = v5 - *(_QWORD *)(v9 + 0x18 );
+//                        NSLog(@"sc,vmaddr: %p,%llu", *(_QWORD *)(v9 + 0x18 ) );
+                        _QWORD vmaddr = *(_QWORD *)(v9 + 0x18 );
+                        v7 = v5 - vmaddr;
+                        NSLog(@"vmaddr: %llu, %lld",vmaddr, v7);
+                    }
                     // v7 = (header - vm address)
                 }
                 
@@ -156,8 +282,14 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
         //v4 = file offset + header ?
         
         //file size
-        *v3 = v10 + *(_QWORD *)(v9 + 0x30);
+        _QWORD filesize =*(_QWORD *)(v9 + 0x30);
+        *v3 = v10 + filesize ;
         
+        NSLog(@"sc filesize: %llu", filesize );
+
+        NSLog(@"result: %lld,%lld,%lld, %llu",v7,v10,*v4,*v3);
+        
+        int asdf = 0;
     }
     return result;
 }
@@ -193,6 +325,9 @@ __int64 prepare_fish_hook_check()
         struct  dyld_all_image_infos* infos = (struct dyld_all_image_infos *) dyld_info.all_image_info_addr;
 
         struct dyld_uuid_info* pUuid_info  = (struct dyld_uuid_info*) infos->uuidArray; //v4
+        const struct dyld_image_info*    infoArray = infos->infoArray;
+        
+        
 
         curr = rootNode;
 
@@ -205,10 +340,11 @@ __int64 prepare_fish_hook_check()
             //Dl_info v15;
             //dladdr(prepare_fish_hook_check, &v15);
             //v0 = v15.dli_fbase;
+            NSLog(@"image base index: %d",index-1);
             
             for ( i = rootNode ; ;  )
             {
-                const struct mach_header *header =  pUuid_info->imageLoadAddress;
+                const struct mach_header_64 *header =  pUuid_info->imageLoadAddress;
 
                 
                 i->isMain = (header == v0);
@@ -218,9 +354,18 @@ __int64 prepare_fish_hook_check()
                 
                 __int64 v11;
                 __int64 v12;
+                
+                find_load_commands_old(header, &v12, &v11);
+                i->beg = v12;
+                i->end = v11;
+                
+
+                
                 find_load_commands(header, &v12, &v11);
                 i->beg = v12;
                 i->end = v11;
+
+                
 
                 
                 next = i->next;
@@ -282,10 +427,10 @@ int new_open(const char *path, int oflag, ...) {
         va_start(ap, oflag);
         mode = va_arg(ap, int);
         va_end(ap);
-        printf("Calling real open('%s', %d, %d)\n", path, oflag, mode);
+//        printf("Calling real open('%s', %d, %d)\n", path, oflag, mode);
         return orig_open(path, oflag, mode);
     } else {
-        printf("Calling real open('%s', %d)\n", path, oflag);
+//        printf("Calling real open('%s', %d)\n", path, oflag);
         return orig_open(path, oflag, mode);
     }
 }
