@@ -45,7 +45,17 @@ typedef struct HookNode {
     int64 a;   //+0
     void* beg; //+8
     void* end; //+16
-    int64 isMain; //+24
+    
+    BYTE isMain; //+24
+    BYTE index;
+    BYTE arg1;
+    BYTE arg2;
+    
+    BYTE arg3;
+    BYTE arg4;
+    BYTE arg5;
+    BYTE arg6;
+    
     struct HookNode *next; //+32
 } HookNode;
 
@@ -175,10 +185,17 @@ __int64 prepare_fish_hook_check()
     
     void *v0; // x19
     __int64 result; // x0
-    __int64 v3; // x8
+//    __int64 v3; // x8
+    
+    struct HookNode *curr;
     __int64 *v4; // x22
-    __int64 i; // x24
-    _QWORD *v8; // x0
+    
+//    __int64 i; // x24
+    struct HookNode *i;
+
+    
+    struct HookNode *next;
+//    _QWORD *v8; // x0
     _QWORD *j; // x8
     _QWORD *v10; // x19
     __int64 v11; // [xsp+8h] [xbp-78h]
@@ -203,55 +220,42 @@ __int64 prepare_fish_hook_check()
 
         struct dyld_uuid_info* pUuid_info  = infos->uuidArray; //v4
 
+        curr = rootNode;
 
-        v3 = qword_103211130;
-        
         
         if ( infos->uuidArrayCount )
         {
-
-
-            /*
-             qword_103211130 为链表头
-             40个字节
-             5个_QWORD
-             +-------------------------------------------+
-             | _QWORD | _QWORD | _QWORD | _QWORD | NEXT  |
-             +-------------------------------------------+
-             8     8        8          8       8
-             , file beg , file end, header is zero (byte) , next entry,
-             
-             */
-
             unsigned __int64 index = 1;
             
-            for ( i = qword_103211130; ;  )
+            for ( i = rootNode ; ;  )
+//            for ( i = qword_103211130; ;  )
             {
                 const struct mach_header *header =  pUuid_info->imageLoadAddress;
 
                 
-                *(_BYTE *)(i + 24) = (header == (_QWORD)v0);
-                *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
+                i->isMain = (header == (_QWORD)v0);
+//                *(_BYTE *)(i + 24) = (header == (_QWORD)v0);
+                
+                curr->index = (signed __int64)(index - 1) > 1;
+//                *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
 
                 
                 find_load_commands(header, &v12, &v11);
                 
                 
-                *(_QWORD *)(i + 8) = v12;
-                *(_QWORD *)(i + 16) = v11;
+                i->beg = v12;
+                i->end = v11;
+//                *(_QWORD *)(i + 8) = v12;
+//                *(_QWORD *)(i + 16) = v11;
                 
                 
-                v8 = *(_QWORD **)(i + 32);
-                if ( !v8 )
+                next = i->next;
+//                v8 = *(_QWORD **)(i + 32);
+                if ( next == NULL )
                 {
-                    v8 = (_QWORD *)malloc(40);
-                    v8[3] = 0;
-                    v8[4] = 0;
-                    v8[1] = 0;
-                    v8[2] = 0;
-                    v8[0] = 0;
-
-                    *(_QWORD *)(i + 32) = v8;
+                    next = malloc(sizeof(struct HookNode));
+                    bzero(next, sizeof(struct HookNode));
+                    i->next = next;
                 }
                 
                 
@@ -259,20 +263,21 @@ __int64 prepare_fish_hook_check()
                     break;
                 
                 pUuid_info = get_next(pUuid_info);
-                v3 = qword_103211130;
+                curr = rootNode;
                 ++index;
-                i = (__int64)v8;
+                i = next;
             }
             
             
-            v3 = (__int64)v8;
+            curr = next;
         }
         else
         {
-            v8 = (_QWORD *)qword_103211130;
+            next = rootNode;
         }
         
-        for ( j = *(_QWORD **)(v3 + 32); j; v8 = v10 )
+        
+        for ( j = *(_QWORD **)(curr + 32); j; next = v10 )
         {
             v10 = j;
             //            free(v8);
