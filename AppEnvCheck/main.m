@@ -115,7 +115,7 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
     v3 = a3;
     v4 = a2;
     v5 = result;
-    struct mach_header *header = (struct mach_header *)result;
+//    struct mach_header *header = (struct mach_header *)result;
     v6 = *(_DWORD *)(result + 16); // header->ncmds
     if ( v6 )
     {
@@ -172,53 +172,34 @@ void _prepare_root()
     bzero(rootNode, sizeof(HookNode));
 }
 
-struct dyld_uuid_info *get_next(struct dyld_uuid_info *i)
-{
-    return i + 1;
-//    int sz = sizeof(struct dyld_uuid_info);
-//    return (struct dyld_uuid_info *) ((char*)i + sz);
-}
-
 __int64 prepare_fish_hook_check()
 {
     _prepare_root();
     
-    void *v0; // x19
-    __int64 result; // x0
-//    __int64 v3; // x8
-    
+    __int64 result;
+
     struct HookNode *curr;
-    __int64 *v4; // x22
+    __int64 *v4;
     
-//    __int64 i; // x24
     struct HookNode *i;
 
     
     struct HookNode *next;
-//    _QWORD *v8; // x0
-    _QWORD *j; // x8
-    _QWORD *v10; // x19
-    __int64 v11; // [xsp+8h] [xbp-78h]
-    __int64 v12; // [xsp+10h] [xbp-70h]
-    integer_t task_info_out[TASK_DYLD_INFO_COUNT]; // [xsp+18h] [xbp-68h]
-    mach_msg_type_number_t task_info_outCnt; // [xsp+2Ch] [xbp-54h]
-    Dl_info v15; // [xsp+30h] [xbp-50h]
+
+    
+
     
     
     
-    //dladdr(prepare_fish_hook_check, &v15);
-    //v0 = v15.dli_fbase;
-    
-    
-    task_info_outCnt = TASK_DYLD_INFO_COUNT;
-    //0x11u
+    integer_t task_info_out[TASK_DYLD_INFO_COUNT];
+    mach_msg_type_number_t task_info_outCnt = TASK_DYLD_INFO_COUNT;
     result = task_info( mach_task_self_ , TASK_DYLD_INFO , task_info_out, &task_info_outCnt);
     if ( result == KERN_SUCCESS )
     {
         struct task_dyld_info dyld_info = *(struct task_dyld_info*)(void*)(task_info_out);
         struct  dyld_all_image_infos* infos = (struct dyld_all_image_infos *) dyld_info.all_image_info_addr;
 
-        struct dyld_uuid_info* pUuid_info  = infos->uuidArray; //v4
+        struct dyld_uuid_info* pUuid_info  = (struct dyld_uuid_info*) infos->uuidArray; //v4
 
         curr = rootNode;
 
@@ -227,30 +208,29 @@ __int64 prepare_fish_hook_check()
         {
             unsigned __int64 index = 1;
             
+            void *v0;
+            //Dl_info v15;
+            //dladdr(prepare_fish_hook_check, &v15);
+            //v0 = v15.dli_fbase;
+            
             for ( i = rootNode ; ;  )
-//            for ( i = qword_103211130; ;  )
             {
                 const struct mach_header *header =  pUuid_info->imageLoadAddress;
 
                 
-                i->isMain = (header == (_QWORD)v0);
-//                *(_BYTE *)(i + 24) = (header == (_QWORD)v0);
-                
+                i->isMain = (header == v0);
+
                 curr->index = (signed __int64)(index - 1) > 1;
-//                *(_BYTE *)(v3 + 25) = (signed __int64)(index - 1) > 1;
 
                 
+                __int64 v11;
+                __int64 v12;
                 find_load_commands(header, &v12, &v11);
-                
-                
                 i->beg = v12;
                 i->end = v11;
-//                *(_QWORD *)(i + 8) = v12;
-//                *(_QWORD *)(i + 16) = v11;
-                
+
                 
                 next = i->next;
-//                v8 = *(_QWORD **)(i + 32);
                 if ( next == NULL )
                 {
                     next = malloc(sizeof(struct HookNode));
@@ -262,7 +242,7 @@ __int64 prepare_fish_hook_check()
                 if ( index >= infos->uuidArrayCount )
                     break;
                 
-                pUuid_info = get_next(pUuid_info);
+                pUuid_info = pUuid_info + 1;
                 curr = rootNode;
                 ++index;
                 i = next;
@@ -277,12 +257,17 @@ __int64 prepare_fish_hook_check()
         }
         
         
+        /*
+        _QWORD *j;
+        _QWORD *v10;
         for ( j = *(_QWORD **)(curr + 32); j; next = v10 )
         {
             v10 = j;
-            //            free(v8);
+            //free(v8);
             j = (_QWORD *)v10[4];
         }
+        */
+        
     }
     
     
