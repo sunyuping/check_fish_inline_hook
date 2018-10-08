@@ -14,8 +14,6 @@
 #include <mach/mach_init.h>
 #include <mach/mach_port.h>
 #include <mach/task_info.h>
-#include <mach/thread_act.h>
-#include <mach/vm_map.h>
 #include <mach/task.h>
 
 
