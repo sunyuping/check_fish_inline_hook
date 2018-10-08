@@ -41,47 +41,50 @@
 @import MachO.loader;
 
 
-typedef struct {
+typedef struct HookNode {
     int64 a;   //+0
-    int64 beg; //+8
-    int64 end; //+16
+    void* beg; //+8
+    void* end; //+16
     int64 isMain; //+24
     struct HookNode *next; //+32
 } HookNode;
 
 
-QWORD qword_103211130;
+static struct HookNode *rootNode = NULL;
+
+//QWORD qword_103211130;
 
 
 //检测函数地址是不是位于__Text之中
-int checkFishHook(unsigned __int64 a1, __int64 a2, __int64 a3)
+BOOL checkFishHook(void *funcAddr)
 {
-    __int64 v3; // x19
-    __int64 v4; // x20
-    __int64 v5; // x9
-    __int64 v6; // x8
-    
-    v3 = a3;
-    v4 = a2;
-    
-    v5 = qword_103211130;
-    if ( !qword_103211130 )
-        return 0xFFFFFFFF;
-    v6 = *(_QWORD *)(qword_103211130 + 32); //next
-    
-    if ( !v6 )
-        return 0;
-    
-    while ( a1 >= *(_QWORD *)(v5 + 16) || a1 <= *(_QWORD *)(v5 + 8) || *(_BYTE *)(v5 + 24) )
+    struct HookNode *curr = rootNode;
+    if ( curr == NULL )
     {
-        v5 = v6;
-        v6 = *(_QWORD *)(v6 + 32);
-        
-        if ( !v6 )
-            return 0;
+        return TRUE;
     }
     
-    return 1;
+    struct HookNode *next = rootNode->next;
+
+    if ( next == NULL )
+    {
+        return 0;
+    }
+    
+
+    while (funcAddr >= curr->end ||
+           funcAddr <= curr->beg ||
+           curr->isMain
+           ) {
+        curr = next;
+        next = next->next;
+        
+        if (next == NULL) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 
@@ -142,7 +145,7 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
         *v4 = v10;
         //v4 = file offset + header ?
         
-        //           file size
+        //file size
         *v3 = v10 + *(_QWORD *)(v9 + 0x30);
         
     }
@@ -153,21 +156,10 @@ __int64 find_load_commands(__int64 result, __int64 *a2, _QWORD *a3)
 
 
 pthread_mutex_t unk_1032AA700;
-void _prepare_0()
+void _prepare_root()
 {
-    _QWORD *v7; // x0
-    
-    v7 = (_QWORD *)malloc(40);
-    memset(v7, 0xff, 40);
-    
-    v7[3] = 0LL;
-    v7[4] = 0LL;
-    v7[1] = 0LL;
-    v7[2] = 0LL;
-    v7[0] = 0;
-    //*(_QWORD *)(i + 32) = v7;
-    
-    qword_103211130 = (__int64)v7;
+    rootNode = malloc(sizeof(HookNode));
+    bzero(rootNode, sizeof(HookNode));
 }
 
 struct dyld_uuid_info *get_next(struct dyld_uuid_info *i)
@@ -179,7 +171,7 @@ struct dyld_uuid_info *get_next(struct dyld_uuid_info *i)
 
 __int64 prepare_fish_hook_check()
 {
-    _prepare_0();
+    _prepare_root();
     
     void *v0; // x19
     __int64 result; // x0
@@ -337,16 +329,16 @@ int main(int argc, char * argv[]) {
     
     int hooked;
     
-    hooked = checkFishHook( (unsigned __int64)&open, 0, 0);
+    hooked = checkFishHook( (unsigned __int64)&open);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&dladdr, 0, 0);
+    hooked = checkFishHook( (unsigned __int64)&dladdr);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&open, 0, 0);
+    hooked = checkFishHook( (unsigned __int64)&open);
     printf("hooked: %d\n",hooked);
     
-    hooked = checkFishHook( (unsigned __int64)&dladdr, 0, 0);
+    hooked = checkFishHook( (unsigned __int64)&dladdr);
     printf("hooked: %d\n",hooked);
     
 
