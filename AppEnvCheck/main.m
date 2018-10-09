@@ -12,8 +12,10 @@
 
 
 int main(int argc, char * argv[]) {
-//    test_fish_hook();
-//    test_inline_hook_check();
+    
+    test_fish_hook();
+    
+    test_inline_hook_check();
     
     getAllUncachedModules();
     

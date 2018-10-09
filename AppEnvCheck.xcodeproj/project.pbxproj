@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1E27BAA62160A98C0052DE31 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1E27BAA52160A98C0052DE31 /* main.m */; };
-		1E59D999216C8F0700193741 /* uncacheModules.c in Sources */ = {isa = PBXBuildFile; fileRef = 1E59D997216C8F0700193741 /* uncacheModules.c */; };
+		1E59D999216C8F0700193741 /* uncacheModules.m in Sources */ = {isa = PBXBuildFile; fileRef = 1E59D997216C8F0700193741 /* uncacheModules.m */; };
 		1EADCBAC216B796C00545C86 /* inlineHookCheck.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EADCBAB216B796C00545C86 /* inlineHookCheck.m */; };
 		1EADCBAF216B799500545C86 /* fishHookCheck.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EADCBAE216B799500545C86 /* fishHookCheck.m */; };
 		1EEFD819216AF33400A77230 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = 1EEFD817216AF33300A77230 /* fishhook.c */; };
@@ -19,7 +19,7 @@
 		1E27BAA42160A98C0052DE31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1E27BAA52160A98C0052DE31 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1E27BAAC2160AA3F0052DE31 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
-		1E59D997216C8F0700193741 /* uncacheModules.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = uncacheModules.c; sourceTree = "<group>"; };
+		1E59D997216C8F0700193741 /* uncacheModules.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uncacheModules.m; sourceTree = "<group>"; };
 		1E59D998216C8F0700193741 /* uncacheModules.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = uncacheModules.h; sourceTree = "<group>"; };
 		1EADCBAA216B794A00545C86 /* inlineHookCheck.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = inlineHookCheck.h; sourceTree = "<group>"; };
 		1EADCBAB216B796C00545C86 /* inlineHookCheck.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = inlineHookCheck.m; sourceTree = "<group>"; };
@@ -73,7 +73,7 @@
 				1EADCBAD216B799500545C86 /* fishHookCheck.h */,
 				1EADCBAE216B799500545C86 /* fishHookCheck.m */,
 				1E59D998216C8F0700193741 /* uncacheModules.h */,
-				1E59D997216C8F0700193741 /* uncacheModules.c */,
+				1E59D997216C8F0700193741 /* uncacheModules.m */,
 			);
 			path = AppEnvCheck;
 			sourceTree = "<group>";
@@ -153,7 +153,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E59D999216C8F0700193741 /* uncacheModules.c in Sources */,
+				1E59D999216C8F0700193741 /* uncacheModules.m in Sources */,
 				1EEFD819216AF33400A77230 /* fishhook.c in Sources */,
 				1EADCBAC216B796C00545C86 /* inlineHookCheck.m in Sources */,
 				1E27BAA62160A98C0052DE31 /* main.m in Sources */,
