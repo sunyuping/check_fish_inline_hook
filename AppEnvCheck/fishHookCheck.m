@@ -140,6 +140,12 @@ void prepare_fish_hook_check()
         struct dyld_uuid_info* pUuid_info  = (struct dyld_uuid_info*) infos->uuidArray; //v4
         
         
+
+
+        
+        
+        
+        
         struct HookNode *curr;
         struct HookNode *i;
         struct HookNode *next;

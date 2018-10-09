@@ -8,8 +8,13 @@
 
 #import "fishHookCheck.h"
 #import "inlineHookCheck.h"
+#import "uncacheModules.h"
+
 
 int main(int argc, char * argv[]) {
-    test_fish_hook();
-    test_inline_hook_check();
+//    test_fish_hook();
+//    test_inline_hook_check();
+    
+    getAllUncachedModules();
+    
 }
