@@ -48,4 +48,23 @@ getchar hooked: 1
 ```
 
 
+## uncacheMubels.m  打印出所有不在dyld shared cache动态库的名字 
+
+用task_info找出进程的信息,得到dyld_all_image_infos，遍历dyld_uuid_info数组来打印信息.
+这个方法,比用_dyld_image_count  _dyld_get_image_name的方法准确，省去了名字匹配.   
+现在是个人都知道hook _dyld_get_image_name来修改返回.
+
+
+AppEnvCheck[13683:1851670] SubstrateBootstrap.dylib
+AppEnvCheck[13683:1851670] /Developer/usr/lib/libBacktraceRecording.dylib
+AppEnvCheck[13683:1851670] /Developer/Library/PrivateFrameworks/DTDDISupport.framework/libViewDebuggerSupport.dylib
+AppEnvCheck[13683:1851670] /usr/lib/system/introspection/libdispatch.dylib
+ AppEnvCheck[13683:1851670] SubstrateLoader.dylib
+ AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/AppAnalyze.dylib
+ AppEnvCheck[13683:1851670] /Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate
+ AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/AppEnvCheckHOOK.dylib
+AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/SSLKillSwitch2.dylib
+AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/TEMain.dylib
+AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/TSTweakEx.dylib
+AppEnvCheck[13683:1851670] /Library/MobileSubstrate/DynamicLibraries/reveal2Loader.dylib
 
