@@ -50,10 +50,10 @@ signed __int64 sub_101BB4BB0(mach_port_t a1, vm_address_t a2, vm_address_t a3, v
     mach_port_t v8; // w0
     bool v9; // zf
     size_t v10; // [xsp+8h] [xbp-18h]
-
+    
     
     struct segment_command_64 *sc = (struct segment_command_64 *)a3;
-
+    
     
     v4 = a4;
     v5 = (void *)a2;
@@ -67,7 +67,7 @@ signed __int64 sub_101BB4BB0(mach_port_t a1, vm_address_t a2, vm_address_t a3, v
         else
             v8 = mach_task_self_;
         
-//        vm_read_overwrite(mach_task_self_, sc , sc->cmdsize, a2, &v10) ;
+        //        vm_read_overwrite(mach_task_self_, sc , sc->cmdsize, a2, &v10) ;
         //vm_read_overwrite 读取进程的信息
         if ( vm_read_overwrite(v8, a3, a4, a2, &v10) )
             v9 = 0;
@@ -95,7 +95,42 @@ signed __int64 sub_101BB4BB0(mach_port_t a1, vm_address_t a2, vm_address_t a3, v
  可以用MachoView打开一个dylib了解详细
  定位到 dylib , Load Commands下的LC_ID_DYLIB 一节下，找到此动态库的路径全名: 如/Library/MobileSubstrate/DynamicLibraries/awemeHOOK.dylib
  */
-//mheader
+void  print_mach_header_dylib_name(const struct mach_header_64* mheader)
+{
+    if(mheader->magic == MH_MAGIC_64 && mheader->ncmds > 0)
+    {
+        void *loadCmd = (void*)(mheader + 1) ;
+        struct segment_command_64 *sc = (struct segment_command_64 *)loadCmd;
+        
+        for ( int index = 0; index < mheader->ncmds; ++index , sc = (struct segment_command_64*)((BYTE*)sc + sc->cmdsize))
+        {
+            
+            if (sc->cmd == LC_ID_DYLIB) {
+                
+                struct dylib_command *dc = (struct dylib_command *)sc;
+                struct dylib dy = dc->dylib;
+                char *str = (char*)dc + dy.name.offset;
+                printf("第一种方法: str: %s\n",str);
+                
+                
+                //第二种方法
+                //用vm_read_overwrite来读取信息
+                void *buf = malloc(sc->cmdsize);
+                int outlen = 0;
+                if ( vm_read_overwrite( mach_task_self_ , (vm_address_t)sc , (vm_size_t)sc->cmdsize , (vm_address_t)buf , (vm_size_t*)&outlen ) )
+                {
+                    printf("\n");
+                }
+                
+                
+                
+                break;
+            }
+        }
+    }
+}
+
+
 signed __int64 sub_101BB66E0(_DWORD *a1, void *a2)
 {
     void *v2; // x19
@@ -111,102 +146,93 @@ signed __int64 sub_101BB66E0(_DWORD *a1, void *a2)
     const struct mach_header_64* mheader = a1;
     v2 = a2;
     v3 = 0xFFFFFFFFLL;
-    if ( a1 && a2 )
+    
+    
+    if(mheader->magic == MH_MAGIC_64)
     {
-
-        if(mheader->magic == MH_MAGIC_64)
-//        if ( *a1 == MH_MAGIC_64 )
+        v4 = a1[4];
+        mheader->ncmds;
+        
+        
+        if(mheader->ncmds > 0)
+            //            if ( v4 )
         {
-            int iii = sizeof(_DWORD);
-            int iiii = sizeof(struct mach_header_64);
+            v5 = 0; //index
+            
+            v6 = a1 + 8;
+            void *loadCmd = mheader + 1 ;
+            struct segment_command_64 *sc = (struct segment_command_64 *)loadCmd;
             
             
-            
-            v4 = a1[4];
-            mheader->ncmds;
-            
-            
-            if(mheader->ncmds > 0)
-//            if ( v4 )
+            while ( 1 )
             {
-                v5 = 0; //index
+                v7 = (unsigned int)v6[1];
+                sc->cmdsize;
                 
-                v6 = a1 + 8;
-                void *loadCmd = mheader + 1 ;
-                struct segment_command_64 *sc = (struct segment_command_64 *)loadCmd;
-
-                
-                while ( 1 )
-                {
-                    v7 = (unsigned int)v6[1];
-                    sc->cmdsize;
-                    
-                    if (sc->cmd == LC_ID_DYLIB) {
-                        break;
-                    }
-                    
-//                    if ( *v6 == 0xD )
-//                        break;
-                    
-                    
-                    //next
-                    sc = (struct segment_command_64*)((BYTE*)sc + sc->cmdsize);
-                    v6 = (_DWORD *)((char *)v6 + v7);
-                    
-                    
-                    if ( ++v5 >= v4 )
-                        goto LABEL_8;
+                if (sc->cmd == LC_ID_DYLIB) {
+                    break;
                 }
                 
-                
-                struct dylib_command *dc = (struct dylib_command *)sc;
-                struct dylib dy = dc->dylib;
-                dy.name;
-                char *str = (char*)dc + dy.name.offset;
-                printf("str: %s\n",str);
-                void *pp = (void*)str;
-                
-//                v9 = (unsigned int *)malloc(v7);
-                v9 = (unsigned int *)malloc(sc->cmdsize);
-
-                
-                unsigned int v66 = v6[1];
-                v6;
-                v10 = sub_101BB4BB0(0LL, v9, sc, (unsigned int)sc->cmdsize);
-//                v10 = sub_101BB4BB0(0LL, v9, v6, (unsigned int)v6[1]);
+                //                    if ( *v6 == 0xD )
+                //                        break;
                 
                 
-                if ( v9 && !((v10 ^ 1) & 1) )
-                {
-                    v3 = 0LL;
-                    v11 = (__int64)v9 + v9[2];
-                LABEL_16:
-                    bzero(v2, 0x400uLL);
-                    sub_101BB4A94((__int64)v2, v11, 1023LL);
-                    free(v9);
-                    return v3;
-                }
-                v3 = 0xFFFFFFFFLL;
-                if ( v9 )
-                {
-                    v11 = 0LL;
-                    goto LABEL_16;
-                }
+                //next
+                sc = (struct segment_command_64*)((BYTE*)sc + sc->cmdsize);
+                v6 = (_DWORD *)((char *)v6 + v7);
+                
+                
+                if ( ++v5 >= v4 )
+                    goto LABEL_8;
             }
-            else
+            
+            
+            struct dylib_command *dc = (struct dylib_command *)sc;
+            struct dylib dy = dc->dylib;
+            dy.name;
+            char *str = (char*)dc + dy.name.offset;
+            printf("str: %s\n",str);
+            void *pp = (void*)str;
+            
+            //                v9 = (unsigned int *)malloc(v7);
+            v9 = (unsigned int *)malloc(sc->cmdsize);
+            
+            
+            unsigned int v66 = v6[1];
+            v6;
+            v10 = sub_101BB4BB0(0LL, v9, sc, (unsigned int)sc->cmdsize);
+            //                v10 = sub_101BB4BB0(0LL, v9, v6, (unsigned int)v6[1]);
+            
+            
+            if ( v9 && !((v10 ^ 1) & 1) )
             {
-            LABEL_8:
                 v3 = 0LL;
+                v11 = (__int64)v9 + v9[2];
+            LABEL_16:
+                bzero(v2, 0x400uLL);
+                sub_101BB4A94((__int64)v2, v11, 1023LL);
+                free(v9);
+                return v3;
+            }
+            v3 = 0xFFFFFFFFLL;
+            if ( v9 )
+            {
+                v11 = 0LL;
+                goto LABEL_16;
             }
         }
         else
         {
-            v3 = 0xFFFFFFFFLL;
+        LABEL_8:
+            v3 = 0LL;
         }
     }
+        else
+        {
+            v3 = 0xFFFFFFFFLL;
+        }
     return v3;
 }
-
 
 
 char *sub_101BB4B70(char *result, char a2, char a3)
@@ -258,7 +284,7 @@ __int64 sub_101BB6678()
         }
     }
     
-
+    
     
     
     return result;
@@ -337,14 +363,14 @@ void getAllUncachedModules()
         
         /*
          cputype;    /* cpu specifier */
-//        cpu_subtype_t    cpusubtype;    /* machine specifier */
-//        uint32_t    filetype;    /* type of file */
-//        uint32_t    ncmds;        /* number of load commands */
-//        uint32_t    sizeofcmds;    /* the size of all the load commands */
-//        uint32_t    flags;        /* flags */
-//         */
+        //        cpu_subtype_t    cpusubtype;    /* machine specifier */
+        //        uint32_t    filetype;    /* type of file */
+        //        uint32_t    ncmds;        /* number of load commands */
+        //        uint32_t    sizeofcmds;    /* the size of all the load commands */
+        //        uint32_t    flags;        /* flags */
+        //         */
         
-  
+        
         printf("uuidArrayCount: %d\n",infos->uuidArrayCount);
         
         
@@ -357,12 +383,12 @@ void getAllUncachedModules()
         {
             v21 = 0LL;
             v22 = 0LL;
-//            v23 = *(_QWORD *)(v19 + 96);
+            //            v23 = *(_QWORD *)(v19 + 96);
             
             pUuid_info;
             do
             {
-//                v24 = *(_DWORD **)v23;
+                //                v24 = *(_DWORD **)v23;
                 
                 const struct mach_header_64* mheader = pUuid_info->imageLoadAddress;
                 /*0
@@ -372,24 +398,24 @@ void getAllUncachedModules()
                  20
                  24
                  */
-//                printf("%d\n", (void*)&(mheader->magic) - (void*)mheader) ;
-//                printf("%d\n", (void*)&(mheader->cpusubtype) - (void*)mheader) ;
-//                printf("%d\n", (void*)&(mheader->filetype) - (void*)mheader) ;
-//                printf("%d\n", (void*)&(mheader->ncmds) - (void*)mheader) ;
-//                printf("%d\n", (void*)&(mheader->sizeofcmds) - (void*)mheader) ;
-//                printf("%d\n", (void*)&(mheader->flags) - (void*)mheader) ;
-
+                //                printf("%d\n", (void*)&(mheader->magic) - (void*)mheader) ;
+                //                printf("%d\n", (void*)&(mheader->cpusubtype) - (void*)mheader) ;
+                //                printf("%d\n", (void*)&(mheader->filetype) - (void*)mheader) ;
+                //                printf("%d\n", (void*)&(mheader->ncmds) - (void*)mheader) ;
+                //                printf("%d\n", (void*)&(mheader->sizeofcmds) - (void*)mheader) ;
+                //                printf("%d\n", (void*)&(mheader->flags) - (void*)mheader) ;
                 
                 
-
+                
+                
                 if (mheader->filetype != MH_DYLIB) {
                     goto LABEL_33;
                 }
                 
                 
                 //mheader->filetype != MH_DYLIB
-//                if ( *(_DWORD *)(*(_QWORD *)v23 + 12LL) != 6 )
-//                    goto LABEL_33;
+                //                if ( *(_DWORD *)(*(_QWORD *)v23 + 12LL) != 6 )
+                //                    goto LABEL_33;
                 
                 
                 
@@ -397,46 +423,20 @@ void getAllUncachedModules()
                 v35 = 0LL;
                 v34[0] = 0LL;
                 
-                v32 = malloc(0x400uLL);
-                bzero(v32, 0x400uLL);
+//                v32 = malloc(0x400uLL);
+//                bzero(v32, 0x400uLL);
                 
                 
                 
-//                printf("malloc: %p",v32);
+                //                printf("malloc: %p",v32);
                 
-//                printf("get next mach header\n");
+                //                printf("get next mach header\n");
+//                sub_101BB66E0(mheader,&v32);
+                print_mach_header_dylib_name(mheader);
                 
                 
-                
-                if ( (unsigned int)sub_101BB66E0(mheader, v32) == -1 )
-//                if ( (unsigned int)sub_101BB66E0(v24, &v32) == -1 )
-                {
-                    v27 = 0;
-                }
-                else
-                {
-                    char *str = v32;
-                    printf("%s\n",str);
-                    
-                    
-                    sub_101BB4B70((char *)v32, 34, 95);
-//                    std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::assign(v34, &v32);
-//                    std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::append(v15, "\"");
-//                    if ( v35 >= 0 )
-//                        v25 = v34;
-//                    else
-//                        v25 = (void **)v34[0];
-//                    if ( v35 >= 0 )
-//                        v26 = (void *)HIBYTE(v35);
-//                    else
-//                        v26 = v34[1];
-//                    std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::append(v15, v25, v26);
-//                    std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::append(v15, "\",");
-//                    v27 = 1;
-//                    v22 = 1LL;
-                }
-//                if ( SHIBYTE(v35) & 0x80000000 )
-//                    operator delete(v34[0]);
+                //                if ( SHIBYTE(v35) & 0x80000000 )
+                //                    operator delete(v34[0]);
                 if ( v27 )
                     LABEL_33:
                     v23 += 24LL;
@@ -452,8 +452,8 @@ void getAllUncachedModules()
                 if ( (v28 & 0x80u) != 0LL )
                     v28 = *(_QWORD *)(v15 + 8);
                 v22 = 1LL;
-//                v29 = std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::erase(v15, v28 - 1, 1LL);
-//                std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::operator=(v15, v29);
+                //                v29 = std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::erase(v15, v28 - 1, 1LL);
+                //                std::__1::basic_string<char,std::__1::char_traits<char>,std::__1::allocator<char>>::operator=(v15, v29);
             }
         }
         
