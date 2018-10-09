@@ -159,7 +159,12 @@ signed __int64 sub_101BB66E0(_DWORD *a1, void *a2)
                 }
                 
                 
-                
+                struct dylib_command *dc = (struct dylib_command *)sc;
+                struct dylib dy = dc->dylib;
+                dy.name;
+                char *str = (char*)dc + dy.name.offset;
+                printf("str: %s\n",str);
+                void *pp = (void*)str;
                 
 //                v9 = (unsigned int *)malloc(v7);
                 v9 = (unsigned int *)malloc(sc->cmdsize);
@@ -397,9 +402,9 @@ void getAllUncachedModules()
                 
                 
                 
-                printf("malloc: %p",v32);
+//                printf("malloc: %p",v32);
                 
-                printf("get next mach header\n");
+//                printf("get next mach header\n");
                 
                 
                 
